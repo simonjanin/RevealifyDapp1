@@ -20,12 +20,11 @@ const contractInstance = contract.new(
       return;
     }
 
-    // Log the tx, you can explore status with eth.getTransaction()
-    console.log(res.transactionHash);
+   
 
     // If we have an address property, the contract was deployed
     if (res.address) {
-      console.log("Contract address: " + res.address,res.abi);
+      console.log("Contract address: " + res.address);
       // Let's test the deployed contract
     }
   }
