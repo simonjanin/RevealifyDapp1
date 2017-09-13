@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server --hot",
-    "clean":"rm -rvf node_modules"
+    "clean": "rm -rvf node_modules package-lock.json"
   },
   "author": "",
   "license": "ISC",
@@ -23,7 +23,7 @@
     "solc": "^0.4.16",
     "style-loader": "^0.18.2",
     "web3": "^0.20.1",
-    "webpack": "^3.4.1",
-    "webpack-dev-server": "^2.6.1"
+    "webpack": "v3.2.0",
+    "webpack-dev-server": "v2.5.0"
   }
 }
