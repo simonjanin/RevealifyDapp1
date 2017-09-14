@@ -24,7 +24,8 @@ const contractInstance = contract.new(
 
     // If we have an address property, the contract was deployed
     if (res.address) {
-      console.log("Contract address: " + res.address);
+      console.log(`\{\"address\":"${res.address}"\}`);
+    
       // Let's test the deployed contract
     }
   }

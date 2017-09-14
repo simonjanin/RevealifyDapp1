@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import AsyncButton from "react-async-button";
 import ReactDOM from "react-dom";
+import contractAddress from '../contractAddress.json'
 
 const abi = [
   {
@@ -73,12 +74,12 @@ const abi = [
   }
 ];
 
-const address = "0xdaa8401ba81069935bc9bb5bdf599d61ceb7b2a2";
+const address = contractAddress.address;
 
 class Form extends Component {
   constructor(props) {
     super(props);
-    this.state = {
+     this.state = {
       etherValue: "",
       string: ""
     };
