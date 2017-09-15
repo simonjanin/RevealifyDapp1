@@ -1,7 +1,15 @@
 import React, { Component } from "react";
 import AsyncButton from "react-async-button";
 import ReactDOM from "react-dom";
-import contractAddress from '../contractAddress.json'
+import contractAddress from "../contractAddress.json";
+
+import SendEtherUI from "./SendEtherUI";
+import MerkelUI from "./MerkelUI";
+import CreateUser from "./CreateUser";
+import WithdrawFunds from "./WithdrawFunds";
+
+import Select from "react-select";
+import "react-select/dist/react-select.css";
 
 const abi = [
   {
@@ -79,14 +87,17 @@ const address = contractAddress.address;
 class Form extends Component {
   constructor(props) {
     super(props);
-     this.state = {
-      etherValue: "",
-      string: ""
+    this.state = {
+      string: "",
+
+      selectedInterface: "attacker"
     };
     this.withDrawMoney = this.withDrawMoney.bind(this);
     this.sendMoney = this.sendMoney.bind(this);
     this.createUser = this.createUser.bind(this);
     this.processSecretEgg = this.processSecretEgg.bind(this);
+    this.logChange = this.logChange.bind(this);
+    this.sendMerkleProof = this.sendMerkleProof.bind(this);
   }
 
   componentDidMount() {
@@ -106,219 +117,183 @@ class Form extends Component {
     }, 3000);
   }
 
-  sendMoney() {
+  sendMoney(etherValue, resolve, reject) {
     const deployedContract = web3.eth.contract(abi).at(address);
-    return new Promise((resolve, reject) => {
-      deployedContract.sendMoney(
-        { value: web3.toWei(this.state.etherValue, "ether"), gas: 3000000 },
-        (err, txHash) => {
-          if (err) {
+
+    deployedContract.sendMoney(
+      { value: web3.toWei(etherValue, "ether"), gas: 3000000 },
+      (err, txHash) => {
+        if (err) {
+          reject();
+        }
+        let filter = web3.eth.filter("latest");
+        filter.watch((error, result) => {
+          if (error) {
             reject();
           }
-          let filter = web3.eth.filter("latest");
-          filter.watch((error, result) => {
+          web3.eth.getTransactionReceipt(txHash, (error, txReceipt) => {
             if (error) {
               reject();
             }
-            web3.eth.getTransactionReceipt(txHash, (error, txReceipt) => {
-              if (error) {
-                reject();
-              }
-              if (txReceipt && txReceipt.transactionHash == txHash) {
-                deployedContract.getBalance.call((err, res) => {
-                  ReactDOM.findDOMNode(
-                    this.refs.userBalance
-                  ).innerHTML = `${web3.fromWei(
-                    res.toString(),
-                    "ether"
-                  )} ethers`;
-                });
-                resolve();
-              }
+            if (txReceipt && txReceipt.transactionHash == txHash) {
+              deployedContract.getBalance.call((err, res) => {
+                ReactDOM.findDOMNode(
+                  this.refs.userBalance
+                ).innerHTML = `${web3.fromWei(res.toString(), "ether")} ethers`;
+              });
+              resolve();
+            }
+          });
+        });
+      }
+    );
+  }
+
+  withDrawMoney(resolve, reject) {
+    const deployedContract = web3.eth.contract(abi).at(address);
+
+    deployedContract.withdraw({ gas: 3000000 }, (err, txHash) => {
+      if (err) {
+        reject();
+      }
+      let filter = web3.eth.filter("latest");
+      filter.watch((error, result) => {
+        if (error) {
+          reject();
+        }
+        web3.eth.getTransactionReceipt(txHash, (error, txReceipt) => {
+          if (error) {
+            reject();
+          }
+          if (txReceipt && txReceipt.transactionHash == txHash) {
+            deployedContract.getBalance.call((err, res) => {
+              ReactDOM.findDOMNode(
+                this.refs.userBalance
+              ).innerHTML = `${web3.fromWei(res.toString(), "ether")} ethers`;
             });
-          });
-        }
-      );
-    });
-  }
-
-  withDrawMoney() {
-    const deployedContract = web3.eth.contract(abi).at(address);
-
-    return new Promise((resolve, reject) => {
-      deployedContract.withdraw({ gas: 3000000 }, (err, txHash) => {
-        if (err) {
-          reject();
-        }
-        let filter = web3.eth.filter("latest");
-        filter.watch((error, result) => {
-          if (error) {
-            reject();
+            resolve();
           }
-          web3.eth.getTransactionReceipt(txHash, (error, txReceipt) => {
-            if (error) {
-              reject();
-            }
-            if (txReceipt && txReceipt.transactionHash == txHash) {
-              deployedContract.getBalance.call((err, res) => {
-                ReactDOM.findDOMNode(
-                  this.refs.userBalance
-                ).innerHTML = `${web3.fromWei(res.toString(), "ether")} ethers`;
-              });
-              resolve();
-            }
-          });
         });
       });
     });
   }
 
-  createUser() {
+  createUser(resolve, reject) {
     const deployedContract = web3.eth.contract(abi).at(address);
-    return new Promise((resolve, reject) => {
-      deployedContract.createUser({ gas: 3000000 }, (err, txHash) => {
-        if (err) {
+    deployedContract.createUser({ gas: 3000000 }, (err, txHash) => {
+      if (err) {
+        reject();
+      }
+      let filter = web3.eth.filter("latest");
+      filter.watch((error, result) => {
+        if (error) {
           reject();
         }
-        let filter = web3.eth.filter("latest");
-        filter.watch((error, result) => {
+        web3.eth.getTransactionReceipt(txHash, (error, txReceipt) => {
           if (error) {
             reject();
           }
-          web3.eth.getTransactionReceipt(txHash, (error, txReceipt) => {
-            if (error) {
-              reject();
-            }
-            if (txReceipt && txReceipt.transactionHash == txHash) {
-              deployedContract.getBalance.call((err, res) => {
-                console.log("err", err, "res", res.toString());
-                ReactDOM.findDOMNode(
-                  this.refs.userBalance
-                ).innerHTML = `${web3.fromWei(res.toString(), "ether")} ethers`;
-              });
-              resolve();
-            }
-          });
+          if (txReceipt && txReceipt.transactionHash == txHash) {
+            deployedContract.getBalance.call((err, res) => {
+              console.log("err", err, "res", res.toString());
+              ReactDOM.findDOMNode(
+                this.refs.userBalance
+              ).innerHTML = `${web3.fromWei(res.toString(), "ether")} ethers`;
+            });
+            resolve();
+          }
         });
       });
     });
   }
 
-  processSecretEgg() {
+  processSecretEgg(resolve, reject) {
     // put the code here to manupulate string // access string using this.state.string
     const deployedContract = web3.eth.contract(abi).at(address);
-    return new Promise((resolve, reject) => {
-      deployedContract.setMerkleTree(
-        "0x0",
-        "0x0",
-        { gas: 3000000 },
-        (err, txHash) => {
-          if(err){reject()}
-          let filter = web3.eth.filter("latest");
-          filter.watch((error, result) => {
-            if(error){reject()}
-            web3.eth.getTransactionReceipt(txHash, (error, txReceipt) => {
-              if (error) {
-                reject();
-              }
-              if (txReceipt && txReceipt.transactionHash == txHash) {
-                resolve();
-              }
-            });
-          });
+    deployedContract.setMerkleTree(
+      "0x0",
+      "0x0",
+      { gas: 3000000 },
+      (err, txHash) => {
+        if (err) {
+          reject();
         }
-      );
-    });
+        let filter = web3.eth.filter("latest");
+        filter.watch((error, result) => {
+          if (error) {
+            reject();
+          }
+          web3.eth.getTransactionReceipt(txHash, (error, txReceipt) => {
+            if (error) {
+              reject();
+            }
+            if (txReceipt && txReceipt.transactionHash == txHash) {
+              resolve();
+            }
+          });
+        });
+      }
+    );
+  }
+  sendMerkleProof(resolve, reject) {
+    setTimeout(() => {
+      resolve();
+    }, 3000);
+  }
+  logChange(val) {
+    console.log("Selected: " + JSON.stringify(val));
+    this.setState({ selectedInterface: val.value });
   }
   render() {
+    var options = [
+      { value: "attacker", label: "Attacker" },
+      { value: "defender", label: "Defender" }
+    ];
+    let sendEtherUI = "";
+    let merkelUI = "";
+    if (this.state.selectedInterface == "defender") {
+      sendEtherUI = <SendEtherUI key={this.state.selectedInterface} sendMoney={this.sendMoney} />;
+
+      merkelUI = (
+        <MerkelUI
+          key="defender"
+          title="Enter a String"
+          buttonText="Call sendMerkelTree!"
+          clickHandler={this.processSecretEgg}
+        />
+      );
+    } else {
+      merkelUI = (
+        <MerkelUI
+          key={this.state.selectedInterface}
+          title="Enter a String"
+          buttonText="Call sendMerkelProof!"
+          clickHandler={this.sendMerkleProof}
+        />
+      );
+    }
+
     return (
       <div className="container">
-        <div className="row">
+        <div className="row" style={{ marginTop: "10px" }}>
           <div className="col-sm-6 col-md-4 col-md-offset-4">
-            <AsyncButton
-              style={{ marginTop: "5%" }}
-              className="btn btn-primary btn-block btn-lg"
-              text="Create User on Blockchain!"
-              pendingText="Saving..."
-              fulFilledText="User created successfully!"
-              rejectedText="Failed! Try Again"
-              loadingClass="isSaving"
-              fulFilledClass="btn-success"
-              rejectedClass="btn-danger"
-              onClick={this.createUser}
+            <Select
+              name="form-field-name"
+              value={this.state.selectedInterface}
+              options={options}
+              onChange={this.logChange}
+              clearable={false}
             />
           </div>
         </div>
+
+        <CreateUser key={this.state.selectedInterface} createUser={this.createUser} />
         <div className="row">
           <div className="col-sm-6 col-md-4 col-md-offset-4">
             <div className="account-wall">
-              <form className="form-signin">
-                <div>
-                  <p className="profile-name">Enter Ethers to send!</p>
-                  <input
-                    style={{ marginTop: "10px" }}
-                    value={this.state.etherValue}
-                    onChange={e =>
-                      this.setState({ etherValue: e.target.value })}
-                    type="text"
-                    className="form-control"
-                    placeholder="...."
-                    required
-                    autoFocus
-                  />
-                  <AsyncButton
-                    style={{ marginTop: "8px" }}
-                    className="btn btn-primary btn-block btn-lg"
-                    text="Send Ethers!"
-                    pendingText="Saving...!"
-                    fulFilledText="sent Successfully!"
-                    rejectedText="Failed! Try Again"
-                    loadingClass="isSaving"
-                    fulFilledClass="btn-success"
-                    rejectedClass="btn-danger"
-                    onClick={this.sendMoney}
-                  />
-                </div>
-                <div style={{ marginTop: "25px" }}>
-                  <p>Click to withdraw all of your balance!</p>
-                  <AsyncButton
-                    className="btn btn-primary btn-block btn-lg"
-                    text="Withdraw Money!"
-                    pendingText="Saving...!"
-                    fulFilledText="withdrawn Successfully!"
-                    rejectedText="Failed! Try Again"
-                    loadingClass="isSaving"
-                    fulFilledClass="btn-success"
-                    rejectedClass="btn-danger"
-                    onClick={this.withDrawMoney}
-                  />
-                </div>
-                <div style={{ marginTop: "25px" }}>
-                  <p className="profile-name">Enter String!</p>
-                  <input
-                    style={{ marginTop: "10px" }}
-                    value={this.state.string}
-                    onChange={e => this.setState({ string: e.target.value })}
-                    type="text"
-                    className="form-control"
-                    placeholder="...."
-                    required
-                    autoFocus
-                  />
-                  <AsyncButton
-                    style={{ marginTop: "8px" }}
-                    className="btn btn-primary btn-block btn-lg"
-                    text="Call setMerkleTree!"
-                    pendingText="Saving...!"
-                    fulFilledText="Saved Successfully!"
-                    rejectedText="Failed! Try Again"
-                    loadingClass="isSaving"
-                    fulFilledClass="btn-success"
-                    rejectedClass="btn-danger"
-                    onClick={this.processSecretEgg}
-                  />
-                </div>
-              </form>
+              <div className="form-signin">{sendEtherUI}</div>
+              <WithdrawFunds key={this.state.selectedInterface} withDrawMoney={this.withDrawMoney} />
+              <div className="form-signin">{merkelUI}</div>
             </div>
           </div>
         </div>
