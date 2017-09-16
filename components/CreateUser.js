@@ -4,7 +4,7 @@ class CreateUser extends Component {
   render() {
     return (
       <div className="row">
-        <div className="col-sm-6 col-md-4 col-md-offset-4">
+        <div className="col-sm-6 col-md-4">
           <AsyncButton
             style={{ marginTop: "5%" }}
             className="btn btn-primary btn-block btn-lg"
