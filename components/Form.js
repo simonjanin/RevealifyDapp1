@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import AsyncButton from "react-async-button";
 import ReactDOM from "react-dom";
-import contractAddress from "../contractAddress.json";
 import axios from "axios";
 
 import SendEtherUI from "./SendEtherUI";
@@ -9,96 +8,11 @@ import MerkelUI from "./MerkelUI";
 import CreateUser from "./CreateUser";
 import WithdrawFunds from "./WithdrawFunds";
 
+import MerkleTree, { checkProof, merkleRoot, checkProofSolidityFactory } from 'merkle-tree-solidity'
+import { sha3 } from "ethereumjs-util";
+
 import Select from "react-select";
 import "react-select/dist/react-select.css";
-
-const abi = [
-  {
-    constant: false,
-    inputs: [],
-    name: "getBalance",
-    outputs: [{ name: "", type: "uint256" }],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [],
-    name: "createUser",
-    outputs: [],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [],
-    name: "withdraw",
-    outputs: [],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    constant: true,
-    inputs: [{ name: "", type: "address" }],
-    name: "contractState",
-    outputs: [
-      { name: "balance", type: "uint256" },
-      { name: "merkleTreeRoot", type: "bytes32" },
-      { name: "merkleTreeFileHash", type: "bytes32" },
-      { name: "commitment", type: "bytes32" }
-    ],
-    payable: false,
-    stateMutability: "view",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [
-      { name: "merkleTreeRoot", type: "bytes32" },
-      { name: "merkleTreeFileHash", type: "bytes32" }
-    ],
-    name: "setMerkleTree",
-    outputs: [],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [],
-    name: "sendMoney",
-    outputs: [{ name: "", type: "bool" }],
-    payable: true,
-    stateMutability: "payable",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [],
-    name: "createAlert",
-    outputs: [],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    anonymous: false,
-    inputs: [{ indexed: false, name: "str", type: "string" }],
-    name: "Print",
-    type: "event"
-  },
-  {
-    anonymous: false,
-    inputs: [{ indexed: false, name: "value", type: "bool" }],
-    name: "Alert",
-    type: "event"
-  }
-];
-
-const address = contractAddress.address;
 
 class Form extends Component {
   constructor(props) {
@@ -116,15 +30,31 @@ class Form extends Component {
     this.sendMerkleProof = this.sendMerkleProof.bind(this);
     this.createAlert = this.createAlert.bind(this);
     this.sendEmail = this.sendEmail.bind(this);
+    this.address;
+    this.abi;
   }
 
   componentDidMount() {
     if (typeof web3 !== "undefined") {
       web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
     }
+
+    (async () => {
+      const fetchaddress = await axios.get(
+        "http://localhost:8680/AddressandABI"
+      );
+
+      return fetchaddress;
+    })().then(address => {
+      console.log(address.data.contractABI, "fetchaddress");
+      this.address = address.data.contractAddress;
+      this.abi = address.data.contractABI;
+    });
+
     let componentMounting = true;
+
     setTimeout(() => {
-      const deployedContract = web3.eth.contract(abi).at(address);
+      const deployedContract = web3.eth.contract(this.abi).at(this.address);
       deployedContract.Alert().watch((err, response) => {
         if (!componentMounting) {
           this.sendEmail();
@@ -141,7 +71,7 @@ class Form extends Component {
   }
 
   sendMoney(etherValue, resolve, reject) {
-    const deployedContract = web3.eth.contract(abi).at(address);
+    const deployedContract = web3.eth.contract(this.abi).at(this.address);
 
     deployedContract.sendMoney(
       { value: web3.toWei(etherValue, "ether"), gas: 3000000 },
@@ -173,7 +103,7 @@ class Form extends Component {
   }
 
   withDrawMoney(resolve, reject) {
-    const deployedContract = web3.eth.contract(abi).at(address);
+    const deployedContract = web3.eth.contract(this.abi).at(this.address);
 
     deployedContract.withdraw({ gas: 3000000 }, (err, txHash) => {
       if (err) {
@@ -201,8 +131,8 @@ class Form extends Component {
     });
   }
 
-  createUser(resolve, reject) {
-    const deployedContract = web3.eth.contract(abi).at(address);
+  createUser(resolve, reject, resetCallback) {
+    const deployedContract = web3.eth.contract(this.abi).at(this.address);
     deployedContract.createUser({ gas: 3000000 }, (err, txHash) => {
       if (err) {
         reject();
@@ -223,6 +153,9 @@ class Form extends Component {
                 this.refs.userBalance
               ).innerHTML = `${web3.fromWei(res.toString(), "ether")} ethers`;
             });
+            setTimeout(() => {
+              resetCallback();
+            }, 3000);
             resolve();
           }
         });
@@ -232,7 +165,7 @@ class Form extends Component {
 
   processSecretEgg(resolve, reject) {
     // put the code here to manupulate string // access string using this.state.string
-    const deployedContract = web3.eth.contract(abi).at(address);
+    const deployedContract = web3.eth.contract(this.abi).at(this.address);
     deployedContract.setMerkleTree(
       "0x0",
       "0x0",
@@ -258,14 +191,47 @@ class Form extends Component {
       }
     );
   }
-  sendMerkleProof(resolve, reject) {
-    setTimeout(() => {
-      resolve();
-    }, 3000);
+  async sendMerkleProof(resolve, reject) {
+    const partialTree = await axios.get("http://localhost:8680/getPartialTree");
+    const { partialTreeJSON, index, number, secret } = partialTree.data;
+    const newProof = await axios.post(
+      "http://localhost:8680/generateProofWithPartialMerkleTree",
+      {
+        partialMerkleTree: partialTreeJSON,
+        index: index,
+        secret: secret,
+        number: number
+      }
+    );
+
+    //console.log(newProof, "new prrrooooofa",partialTree.data.partialTreeRoot);
+    const deployedContract = web3.eth.contract(this.abi).at(this.address);
+    const aa = partialTree.data.partialTreeRoot;
+    const bb = sha3(secret);
+    console.log("proof:",newProof.data,"Partial tree root: ",aa.data," secret: ",bb,
+  )
+    checkProof(new Buffer(newProof.data), new Buffer(aa.data), new Buffer(bb),(err,res)=>{
+      console.log(err,res)
+    })
+    // const checkProofSolidity = checkProofSolidityFactory(deployedContract.checkProof)
+    //  checkProofSolidity(new Buffer(newProof.data), new Buffer(aa.data), new Buffer(bb), (err, res) => {
+    //        console.log(err,res)
+    //  })
+      // -> true
+    //console.log(res,"reeeeeeeees")
+    // deployedContract.checkProof(
+    //   'asdasd',
+    //   'asdasdsa',
+    //   'asdasdsa',
+    //   { gas: 3000000 },
+    //   (err, txHash) => {
+    //     console.log("latest ", err, txHash);
+    //   }
+    // );
   }
 
   createAlert(resolve, reject) {
-    const deployedContract = web3.eth.contract(abi).at(address);
+    const deployedContract = web3.eth.contract(this.abi).at(this.address);
     deployedContract.createAlert((err, res) => {
       if (err) {
         reject();

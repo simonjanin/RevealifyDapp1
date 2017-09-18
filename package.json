@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node deployContract.js > contractAddress.json && webpack-dev-server --hot",
+    "serverReact": "webpack-dev-server --hot",
+    "serverContract": "npm run build --prefix server2 && npm run server --prefix server2",
+    "start": "concurrently \"npm run serverContract\" \"npm run serverReact\" ",
     "clean": "rm -rvf node_modules package-lock.json"
   },
   "author": "",
@@ -15,9 +17,10 @@
     "babel-loader": "^7.1.1",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
-    "concurrently": "^3.5.0",
     "ethereumjs-testrpc": "^4.1.1",
+    "ethereumjs-util": "^5.1.2",
     "jquery": "^3.2.1",
+    "merkle-tree-solidity": "^1.0.8",
     "react": "^15.6.1",
     "react-async-button": "^0.2.0",
     "react-bootstrap": "^0.31.3",
@@ -30,6 +33,7 @@
     "webpack-dev-server": "v2.5.0"
   },
   "devDependencies": {
+    "concurrently": "^3.5.0",
     "css-loader": "^0.28.7"
   }
 }
