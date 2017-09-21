@@ -1,5 +1,11 @@
 # RevealifyDapp1
- - Install
+ - Install Server2 dependencies:
+ Go to /server2 and do
+```
+npm install
+```
+ - Install Webpack server dependencies:
+ Go to / (root) directory and do
  ```
  npm install
  ```
