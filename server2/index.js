@@ -296,6 +296,7 @@ const generateProofWithPartialMerkleTree1 = (
 let merkleTree = "";
 
 const getPartialTree = async (arg_index, arg_randomNumber, arg_secret ) => {
+  console.log("in index.js ",arg_index, arg_randomNumber, arg_secret)
   let result = await setup({ testRPCProvider: false });
   const merkleProof = result.merkleProof;
   const eth = result.eth;
@@ -315,12 +316,12 @@ const getPartialTree = async (arg_index, arg_randomNumber, arg_secret ) => {
 
 
  //************ generating proof for back-end for testing purposes, will be removed later************************
-  const newProof = generateProofWithPartialMerkleTree(
-    partialMerkleTree,
-    3,
-    secrets[1],
-    numbers[1]
-  );
+  // const newProof = generateProofWithPartialMerkleTree(
+  //   partialMerkleTree,
+  //   3,
+  //   secrets[1],
+  //   numbers[1]
+  // );
 //*****************END *******************************
   console.log("index:",3,
     " secret:",
@@ -333,19 +334,19 @@ const getPartialTree = async (arg_index, arg_randomNumber, arg_secret ) => {
 
   //console.log("arguments", newProof, partialTreeRoot, sha3(secrets[1]))
  // ************consoling proof for back-end for testing purposes, will be removed later****************
-  console.log(
-    "checkProof new: ",
-    checkProof(newProof, partialTreeRoot, sha3(secrets[1]))
-  );
-
-  // check merkle proof in Solidity
-  // we can now safely pass in the buffers returned by previous methods
-  const res2 = await checkProofSolidity(
-    newProof,
-    partialTreeRoot,
-    sha3(secrets[1])
-  ); // -> true
-  console.log("checkProofSolidity new: " + res2["0"]);
+  // console.log(
+  //   "checkProof new: ",
+  //   checkProof(newProof, partialTreeRoot, sha3(secrets[1]))
+  // );
+  //
+  // // check merkle proof in Solidity
+  // // we can now safely pass in the buffers returned by previous methods
+  // const res2 = await checkProofSolidity(
+  //   newProof,
+  //   partialTreeRoot,
+  //   sha3(secrets[1])
+  // ); // -> true
+  // console.log("checkProofSolidity new: " + res2["0"]);
 //*************************END *************************
   return {
     partialTreeJSON,

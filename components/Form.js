@@ -211,9 +211,26 @@ class Form extends Component {
     );
   }
   async sendMerkleProof(indexx, randomNumber, secretNumber, resolve, reject) {
+    console.log(indexx, randomNumber, secretNumber);
     const partialTree = await axios.get("http://localhost:8680/getPartialTree");
 
-    const { partialTreeJSON, index, number, secret } = partialTree.data;
+    // const { partialTreeJSON, index, number, secret } = partialTree.data;
+    // const newProof = await axios.post(
+    //   "http://localhost:8680/generateProofWithPartialMerkleTree",
+    //   {
+    //     partialMerkleTree: partialTreeJSON,
+    //     index: index,
+    //     secret: secret,
+    //     number: number
+    //   }
+    // );
+
+    // uncomment the below code and comment the above code to work with the number and secret received from user input
+
+    const { partialTreeJSON } = partialTree.data;
+    const index = indexx;
+    const number = randomNumber;
+    const secret = secretNumber;
     const newProof = await axios.post(
       "http://localhost:8680/generateProofWithPartialMerkleTree",
       {
@@ -223,22 +240,6 @@ class Form extends Component {
         number: number
       }
     );
-
-    // uncomment the below code and comment the above code to work with the number and secret received from user input
-
-    //const { partialTreeJSON } = partialTree.data;
-    // const index = indexx
-    // const number =randomNumber
-    // const secret = secretNumber
-    // const newProof = await axios.post(
-    //   "http://localhost:8680/generateProofWithPartialMerkleTree",
-    //   {
-    //     partialMerkleTree: partialTreeJSON,
-    //     index: indexx,
-    //     secret: secretNumber,
-    //     number: randomNumber
-    //   }
-    // );
 
     const proofBuffer = newProof.data.map(value => {
       return Buffer.from(value, "hex");
@@ -273,7 +274,7 @@ class Form extends Component {
     ReactDOM.findDOMNode(
       this.refs.merkelProof
     ).innerHTML = `"checkProof: ${responseCheckProof} & checkProofSolidity: ${responseCheckProofSolidity}`;
-  resolve()
+    resolve();
   }
 
   createAlert(resolve, reject) {
