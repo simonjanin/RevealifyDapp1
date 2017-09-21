@@ -41,19 +41,13 @@ const setup = async function(opts) {
   if (opts.testRPCProvider) {
     provider = new HttpProvider(opts.testRPCProvider);
   } else {
-    provider = TestRPC.provider({
-      mnemonic: mnemonic
-    });
+    provider = TestRPC.provider({ mnemonic: mnemonic });
   }
 
   // START TESTRPC SERVER
   if (opts.testRPCServer) {
     console.log("setting up testrpc server");
-    await p(
-      TestRPC.server({
-        mnemonic: mnemonic
-      }).listen
-    )(port);
+    await p(TestRPC.server({ mnemonic: mnemonic }).listen)(port);
   }
 
   // BUILD ETHJS ABSTRACTIONS
@@ -66,7 +60,12 @@ const setup = async function(opts) {
     "MerkleProof.sol": fs.readFileSync(SOL_PATH + "MerkleProof.sol").toString()
   };
 
-  const output = solc.compile({ sources: input }, 1);
+  const output = solc.compile(
+    {
+      sources: input
+    },
+    1
+  );
   if (output.errors) {
     throw new Error(output.errors);
   }
@@ -288,42 +287,76 @@ const generateProofWithPartialMerkleTree1 = (
   const newProof = partialMerkleTree.getProofOrdered(level1Node, level1Index);
   newProof.unshift(partnerLeaf);
 
-  return newProof;
+  const hexProof = newProof.map(value => {
+    return value.toString("hex");
+  });
+  return hexProof;
 };
 
-const getPartialTree = async (index1, secret1, number1) => {
-  let result = await setup({
-    testRPCProvider: false
-  });
+let merkleTree = "";
+
+const getPartialTree = async (arg_index, arg_randomNumber, arg_secret ) => {
+  let result = await setup({ testRPCProvider: false });
   const merkleProof = result.merkleProof;
   const eth = result.eth;
   const accounts = result.accounts;
   const web3 = result.web3;
+  const checkProofSolidity = checkProofSolidityFactory(merkleProof.checkProof);
 
   // create merkle tree
   const secrets = ["A", "B", "C", "D"];
   const numbers = buildRandomNumbers(secrets.length);
-  const merkleTree = buildTreeWithSecrets(secrets, numbers);
-
+  if (merkleTree == "") {
+    console.log("creating new Tree");
+    merkleTree = buildTreeWithSecrets(secrets, numbers);
+  }
   const partialMerkleTree = merkleTree.partialMerkleTree();
-  //console.log("partial tree in file:", partialMerkleTree.toJson());
-  //   console.log(
-  //     "index:",
-  //     3,
-  //     " secret:",
-  //     secrets[1],
-  //     " randomNumber:",
-  //     numbers[1]
-  //   );
+
+
+
+ //************ generating proof for back-end for testing purposes, will be removed later************************
+  const newProof = generateProofWithPartialMerkleTree(
+    partialMerkleTree,
+    3,
+    secrets[1],
+    numbers[1]
+  );
+//*****************END *******************************
+  console.log("index:",3,
+    " secret:",
+    secrets[1],
+    " randomNumber:",
+    numbers[1]
+  );
   const partialTreeJSON = partialMerkleTree.toJson();
   const partialTreeRoot = partialMerkleTree.getRoot();
+
+  //console.log("arguments", newProof, partialTreeRoot, sha3(secrets[1]))
+ // ************consoling proof for back-end for testing purposes, will be removed later****************
+  console.log(
+    "checkProof new: ",
+    checkProof(newProof, partialTreeRoot, sha3(secrets[1]))
+  );
+
+  // check merkle proof in Solidity
+  // we can now safely pass in the buffers returned by previous methods
+  const res2 = await checkProofSolidity(
+    newProof,
+    partialTreeRoot,
+    sha3(secrets[1])
+  ); // -> true
+  console.log("checkProofSolidity new: " + res2["0"]);
+//*************************END *************************
   return {
     partialTreeJSON,
-    partialTreeRoot,
+    partialTreeRoot: partialTreeRoot.toString("hex"),
     index: 3,
-    secret: secrets[1],
+    secret: secrets[1].toString("hex"),
     number: numbers[1]
   };
 };
 
-module.exports = { generateProofWithPartialMerkleTree1, getPartialTree };
+module.exports = {
+  generateProofWithPartialMerkleTree1,
+  getPartialTree
+};

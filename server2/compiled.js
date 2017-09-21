@@ -68,17 +68,13 @@ const setup = (() => {
     if (opts.testRPCProvider) {
       provider = new _ethjsProviderHttp2.default(opts.testRPCProvider);
     } else {
-      provider = _ethereumjsTestrpc2.default.provider({
-        mnemonic: mnemonic
-      });
+      provider = _ethereumjsTestrpc2.default.provider({ mnemonic: mnemonic });
     }
 
     // START TESTRPC SERVER
     if (opts.testRPCServer) {
       console.log("setting up testrpc server");
-      yield (0, _es6Promisify2.default)(_ethereumjsTestrpc2.default.server({
-        mnemonic: mnemonic
-      }).listen)(port);
+      yield (0, _es6Promisify2.default)(_ethereumjsTestrpc2.default.server({ mnemonic: mnemonic }).listen)(port);
     }
 
     // BUILD ETHJS ABSTRACTIONS
@@ -91,7 +87,9 @@ const setup = (() => {
       "MerkleProof.sol": _fs2.default.readFileSync(SOL_PATH + "MerkleProof.sol").toString()
     };
 
-    const output = _solc2.default.compile({ sources: input }, 1);
+    const output = _solc2.default.compile({
+      sources: input
+    }, 1);
     if (output.errors) {
       throw new Error(output.errors);
     }
@@ -300,41 +298,53 @@ const generateProofWithPartialMerkleTree1 = (partialMerkleTree, index, secretNum
   const newProof = partialMerkleTree.getProofOrdered(level1Node, level1Index);
   newProof.unshift(partnerLeaf);
 
-  return newProof;
+  const hexProof = newProof.map(value => {
+    return value.toString("hex");
+  });
+  return hexProof;
 };
 
+let merkleTree = "";
+
 const getPartialTree = (() => {
-  var _ref2 = _asyncToGenerator(function* (index1, secret1, number1) {
-    let result = yield setup({
-      testRPCProvider: false
-    });
+  var _ref2 = _asyncToGenerator(function* (arg_index, arg_randomNumber, arg_secret) {
+    let result = yield setup({ testRPCProvider: false });
     const merkleProof = result.merkleProof;
     const eth = result.eth;
     const accounts = result.accounts;
     const web3 = result.web3;
+    const checkProofSolidity = (0, _merkleTreeSolidity.checkProofSolidityFactory)(merkleProof.checkProof);
 
     // create merkle tree
     const secrets = ["A", "B", "C", "D"];
     const numbers = buildRandomNumbers(secrets.length);
-    const merkleTree = buildTreeWithSecrets(secrets, numbers);
-
+    if (merkleTree == "") {
+      console.log("creating new Tree");
+      merkleTree = buildTreeWithSecrets(secrets, numbers);
+    }
     const partialMerkleTree = merkleTree.partialMerkleTree();
-    //console.log("partial tree in file:", partialMerkleTree.toJson());
-    //   console.log(
-    //     "index:",
-    //     3,
-    //     " secret:",
-    //     secrets[1],
-    //     " randomNumber:",
-    //     numbers[1]
-    //   );
+
+    //************ generating proof for back-end for testing purposes, will be removed later************************
+    const newProof = generateProofWithPartialMerkleTree(partialMerkleTree, 3, secrets[1], numbers[1]);
+    //*****************END *******************************
+    console.log("index:", 3, " secret:", secrets[1], " randomNumber:", numbers[1]);
     const partialTreeJSON = partialMerkleTree.toJson();
     const partialTreeRoot = partialMerkleTree.getRoot();
+
+    //console.log("arguments", newProof, partialTreeRoot, sha3(secrets[1]))
+    // ************consoling proof for back-end for testing purposes, will be removed later****************
+    console.log("checkProof new: ", (0, _merkleTreeSolidity.checkProof)(newProof, partialTreeRoot, (0, _ethereumjsUtil.sha3)(secrets[1])));
+
+    // check merkle proof in Solidity
+    // we can now safely pass in the buffers returned by previous methods
+    const res2 = yield checkProofSolidity(newProof, partialTreeRoot, (0, _ethereumjsUtil.sha3)(secrets[1])); // -> true
+    console.log("checkProofSolidity new: " + res2["0"]);
+    //*************************END *************************
     return {
       partialTreeJSON: partialTreeJSON,
-      partialTreeRoot: partialTreeRoot,
+      partialTreeRoot: partialTreeRoot.toString("hex"),
       index: 3,
-      secret: secrets[1],
+      secret: secrets[1].toString("hex"),
       number: numbers[1]
     };
   });
@@ -344,4 +354,7 @@ const getPartialTree = (() => {
   };
 })();
 
-module.exports = { generateProofWithPartialMerkleTree1: generateProofWithPartialMerkleTree1, getPartialTree: getPartialTree };
+module.exports = {
+  generateProofWithPartialMerkleTree1: generateProofWithPartialMerkleTree1,
+  getPartialTree: getPartialTree
+};

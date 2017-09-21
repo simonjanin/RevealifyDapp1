@@ -27,6 +27,7 @@ const contractInstance = contract.new(
       console.log(`\{\"address\":"${res.address}"\}`);
       contractAddress = res.address
       contractABI = res.abi
+      console.log("******Revealify has been deployed!******")
       // Let's test the deployed contract
     }
   }
@@ -34,4 +35,3 @@ const contractInstance = contract.new(
 module.exports=function getAddress(){
   return {contractAddress, contractABI}
 }
-

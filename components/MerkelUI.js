@@ -33,9 +33,27 @@ class MerkerUI extends Component {
           fulFilledClass="btn-success"
           rejectedClass="btn-danger"
           onClick={() => {
-            return new Promise((resolve, reject) => {
-              this.props.clickHandler(resolve, reject);
-            });
+            if (this.props.keyProp == "attacker") {
+              const tokenizedString = this.state.string.split(/[ ,]/);
+
+              let index = tokenizedString[0];
+              let randomNumber = tokenizedString[1];
+              let secretNumber = tokenizedString[2];
+
+              return new Promise((resolve, reject) => {
+                this.props.clickHandler(
+                  index,
+                  randomNumber,
+                  secretNumber,
+                  resolve,
+                  reject
+                );
+              });
+            } else {
+              return new Promise((resolve, reject) => {
+                this.props.clickHandler(resolve, reject);
+              });
+            }
           }}
         />
       </div>
