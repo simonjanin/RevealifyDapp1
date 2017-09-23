@@ -2,7 +2,8 @@ pragma solidity ^0.4.0;
 
 contract Revealify {
     event Print(string str);
-
+	event Alert(bool value);
+     bool alert;
 	struct UserData {
 		// FIXED PARAMETERS
 		uint balance;
@@ -36,6 +37,10 @@ uint amount = contractState[msg.sender].balance;
 contractState[msg.sender].balance = 0;
 msg.sender.transfer(amount);
 }
+
+function createAlert() {
+   Alert(true);
+  }
 	
 	function sendMoney() payable returns (bool) {
 	    contractState[msg.sender].balance += msg.value;
