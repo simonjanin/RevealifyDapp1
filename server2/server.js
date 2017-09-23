@@ -27,10 +27,8 @@ app.post("/generateProofWithPartialMerkleTree", (req, res) => {
   res.send(data);
 });
 
-app.post("/getPartialTree", async (req, res) => {
-  console.log(req.body,"bodyyyyyy")
-  const {indexx, randomNumber, secretNumber} = req.body
-  const data = await merkleTree.getPartialTree(indexx, randomNumber, secretNumber);
+app.get("/getPartialTree", async (req, res) => {
+  const data = await merkleTree.getPartialTree();
   res.send(data);
 });
 

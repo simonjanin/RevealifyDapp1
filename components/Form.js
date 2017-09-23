@@ -214,13 +214,12 @@ class Form extends Component {
   }
   async sendMerkleProof(indexx, randomNumber, secretNumber, resolve, reject) {
     console.log(indexx, randomNumber, secretNumber);
-    const partialTree = await axios.post(
-      "http://localhost:8680/getPartialTree",
-      { indexx, randomNumber, secretNumber }
-    );
+    const partialTree = await axios.get("http://localhost:8680/getPartialTree");
 
-for (let number =1 ; number< 1000 ; number++){
-    const { partialTreeJSON, index, secret } = partialTree.data;
+    const { partialTreeJSON } = partialTree.data;
+    const index = indexx;
+    const number = randomNumber;
+    const secret = secretNumber;
     const newProof = await axios.post(
       "http://localhost:8680/generateProofWithPartialMerkleTree",
       {
@@ -230,22 +229,6 @@ for (let number =1 ; number< 1000 ; number++){
         number: number
       }
     );
-
-    // uncomment the below code and comment the above code to work with the number and secret received from user input
-
-    // const { partialTreeJSON } = partialTree.data;
-    // const index = indexx;
-    // const number = randomNumber;
-    // const secret = secretNumber;
-    // const newProof = await axios.post(
-    //   "http://localhost:8680/generateProofWithPartialMerkleTree",
-    //   {
-    //     partialMerkleTree: partialTreeJSON,
-    //     index: index,
-    //     secret: secret,
-    //     number: number
-    //   }
-    // );
 
     const proofBuffer = newProof.data.map(value => {
       return Buffer.from(value, "hex");
@@ -257,28 +240,27 @@ for (let number =1 ; number< 1000 ; number++){
       "hex"
     );
 
-    const checkProofSolidity = checkProofOrderedSolidityFactory(deployedContract.checkProofOrdered)
+    const checkProofSolidity = checkProofOrderedSolidityFactory(
+      deployedContract.checkProofOrdered
+    );
 
-  //  console.log("arguments", proofBuffer, partialTreeRoot, sha3(secret));
+    //console.log("arguments", proofBuffer, partialTreeRoot, sha3(secret),index);
     const responseCheckProof = checkProofOrdered(
       proofBuffer,
       partialTreeRoot,
       sha3(secret),
-      3
+      index
     );
-  //  console.log("checkProofOrdered ", responseCheckProof);
-
-    // check merkle proof in Solidity
-    // we can now safely pass in the buffers returned by previous methods
+    console.log("checkProofOrdered ", responseCheckProof);
 
     const responseCheckProofSolidity = await checkProofSolidity(
       proofBuffer,
       partialTreeRoot,
       sha3(secret),
-      3
+      index
     ); // -> true
     console.log("checkProofSolidity " + responseCheckProofSolidity);
-  }
+
     ReactDOM.findDOMNode(
       this.refs.merkelProof
     ).innerHTML = `"checkProof: ${responseCheckProof} & checkProofSolidity: ${responseCheckProofSolidity}`;

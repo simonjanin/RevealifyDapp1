@@ -307,8 +307,7 @@ const generateProofWithPartialMerkleTree1 = (partialMerkleTree, index, secretNum
 let merkleTree = "";
 let partialMerkleTree = "";
 const getPartialTree = (() => {
-  var _ref2 = _asyncToGenerator(function* (arg_index, arg_randomNumber, arg_secret) {
-    console.log("in index.js ", arg_index, arg_randomNumber, arg_secret);
+  var _ref2 = _asyncToGenerator(function* () {
     let result = yield setup({ testRPCProvider: false });
     const merkleProof = result.merkleProof;
     const eth = result.eth;
@@ -320,36 +319,22 @@ const getPartialTree = (() => {
     const secrets = ["A", "B", "C", "D"];
     const numbers = buildRandomNumbers(secrets.length);
 
-    console.log("creating new Tree");
-    merkleTree = buildTreeWithSecrets(secrets, numbers);
-    partialMerkleTree = merkleTree.partialMerkleTree();
+    if (merkleTree == "") {
+      console.log("creating new Tree");
+      merkleTree = buildTreeWithSecrets(secrets, numbers);
+      partialMerkleTree = merkleTree.partialMerkleTree();
+    }
 
-    //************ generating proof for back-end for testing purposes, will be removed later************************
-    const newProof = generateProofWithPartialMerkleTree(partialMerkleTree, 3, secrets[1], numbers[1]);
-    //*****************END *******************************
-    console.log("index:", 3, " secret:", secrets[1], " randomNumber:", numbers[1]);
     const partialTreeJSON = partialMerkleTree.toJson();
     const partialTreeRoot = partialMerkleTree.getRoot();
 
-    //console.log("arguments", newProof, partialTreeRoot, sha3(secrets[1]))
-    // ************consoling proof for back-end for testing purposes, will be removed later****************
-    console.log("checkProofOrdered new: ", (0, _merkleTreeSolidity.checkProofOrdered)(newProof, partialTreeRoot, (0, _ethereumjsUtil.sha3)(secrets[1]), 3));
-
-    // check merkle proof in Solidity
-    // we can now safely pass in the buffers returned by previous methods
-    const res2 = yield checkProofSolidity(newProof, partialTreeRoot, (0, _ethereumjsUtil.sha3)(secrets[1]), 3); // -> true
-    console.log("checkProofSolidity new: " + res2["0"]);
-    //*************************END *************************
     return {
       partialTreeJSON: partialTreeJSON,
-      partialTreeRoot: partialTreeRoot.toString("hex"),
-      index: 3,
-      secret: secrets[1].toString("hex"),
-      number: numbers[1]
+      partialTreeRoot: partialTreeRoot.toString("hex")
     };
   });
 
-  return function getPartialTree(_x2, _x3, _x4) {
+  return function getPartialTree() {
     return _ref2.apply(this, arguments);
   };
 })();
