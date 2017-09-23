@@ -294,36 +294,38 @@ const generateProofWithPartialMerkleTree1 = (
 };
 
 let merkleTree = "";
-
-const getPartialTree = async (arg_index, arg_randomNumber, arg_secret ) => {
-  console.log("in index.js ",arg_index, arg_randomNumber, arg_secret)
+  let partialMerkleTree = "";
+const getPartialTree = async (arg_index, arg_randomNumber, arg_secret) => {
+  console.log("in index.js ", arg_index, arg_randomNumber, arg_secret);
   let result = await setup({ testRPCProvider: false });
   const merkleProof = result.merkleProof;
   const eth = result.eth;
   const accounts = result.accounts;
   const web3 = result.web3;
-  const checkProofSolidity = checkProofSolidityFactory(merkleProof.checkProof);
+  const checkProofSolidity = checkProofOrderedSolidityFactory(
+    merkleProof.checkProofOrdered
+  );
 
   // create merkle tree
   const secrets = ["A", "B", "C", "D"];
   const numbers = buildRandomNumbers(secrets.length);
-  if (merkleTree == "") {
+
     console.log("creating new Tree");
     merkleTree = buildTreeWithSecrets(secrets, numbers);
-  }
-  const partialMerkleTree = merkleTree.partialMerkleTree();
+    partialMerkleTree = merkleTree.partialMerkleTree();
 
 
-
- //************ generating proof for back-end for testing purposes, will be removed later************************
-  // const newProof = generateProofWithPartialMerkleTree(
-  //   partialMerkleTree,
-  //   3,
-  //   secrets[1],
-  //   numbers[1]
-  // );
-//*****************END *******************************
-  console.log("index:",3,
+  //************ generating proof for back-end for testing purposes, will be removed later************************
+  const newProof = generateProofWithPartialMerkleTree(
+    partialMerkleTree,
+    3,
+    secrets[1],
+    numbers[1]
+  );
+  //*****************END *******************************
+  console.log(
+    "index:",
+    3,
     " secret:",
     secrets[1],
     " randomNumber:",
@@ -333,21 +335,22 @@ const getPartialTree = async (arg_index, arg_randomNumber, arg_secret ) => {
   const partialTreeRoot = partialMerkleTree.getRoot();
 
   //console.log("arguments", newProof, partialTreeRoot, sha3(secrets[1]))
- // ************consoling proof for back-end for testing purposes, will be removed later****************
-  // console.log(
-  //   "checkProof new: ",
-  //   checkProof(newProof, partialTreeRoot, sha3(secrets[1]))
-  // );
-  //
-  // // check merkle proof in Solidity
-  // // we can now safely pass in the buffers returned by previous methods
-  // const res2 = await checkProofSolidity(
-  //   newProof,
-  //   partialTreeRoot,
-  //   sha3(secrets[1])
-  // ); // -> true
-  // console.log("checkProofSolidity new: " + res2["0"]);
-//*************************END *************************
+  // ************consoling proof for back-end for testing purposes, will be removed later****************
+  console.log(
+    "checkProofOrdered new: ",
+    checkProofOrdered(newProof, partialTreeRoot, sha3(secrets[1]), 3)
+  );
+
+  // check merkle proof in Solidity
+  // we can now safely pass in the buffers returned by previous methods
+  const res2 = await checkProofSolidity(
+    newProof,
+    partialTreeRoot,
+    sha3(secrets[1]),
+    3
+  ); // -> true
+  console.log("checkProofSolidity new: " + res2["0"]);
+  //*************************END *************************
   return {
     partialTreeJSON,
     partialTreeRoot: partialTreeRoot.toString("hex"),
