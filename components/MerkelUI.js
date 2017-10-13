@@ -37,7 +37,7 @@ class MerkerUI extends Component {
               const tokenizedString = this.state.string.split(/[ ,]/);
 
               let index = tokenizedString[0];
-              let randomNumber = tokenizedString[1];
+              let randomNumber = parseInt(tokenizedString[1]);
               let secretNumber = tokenizedString[2];
 
               return new Promise((resolve, reject) => {

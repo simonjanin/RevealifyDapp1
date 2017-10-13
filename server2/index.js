@@ -307,7 +307,7 @@ const getPartialTree = async () => {
 
   // create merkle tree
   const secrets = ["A", "B", "C", "D"];
-  const numbers = buildRandomNumbers(secrets.length);
+  const numbers = [1, 2, 3, 4];
 
   if (merkleTree == "") {
     console.log("creating new Tree");
