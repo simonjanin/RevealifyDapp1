@@ -7,7 +7,7 @@
  ```
  npm install
  ```
- - Start (run this command root directory of the project)
+ - Start (run this command in root directory of the project)
 ```
 npm run start
 ```
