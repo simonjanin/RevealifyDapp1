@@ -22,7 +22,10 @@
     "babel-polyfill": "^6.26.0",
     "babel-register": "^6.26.0",
     "merkle-tools": "^1.3.2",
-    "merkle-tree-solidity": "^1.0.8"
+    "merkle-tree-solidity": "^1.0.8",
+    "body-parser": "^1.18.1",
+    "express": "^4.15.4",
+    
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
