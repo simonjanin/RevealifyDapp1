@@ -1,9 +1,13 @@
 # RevealifyDapp1
- - Install
+ - Install (run command in root directory)
  ```
  npm install
  ```
- - Start
+ - Installation for server (go to directory 'server2' and run command)
+ ```
+ npm install
+ ```
+ - Start (run this command root directory of the project)
 ```
 npm run start
 ```
